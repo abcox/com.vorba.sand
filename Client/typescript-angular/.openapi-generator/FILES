@@ -1,0 +1,17 @@
+.gitignore
+.openapi-generator-ignore
+README.md
+api.module.ts
+api/api.ts
+api/blog.service.ts
+api/post.service.ts
+api/test.service.ts
+configuration.ts
+encoder.ts
+git_push.sh
+index.ts
+model/blog.ts
+model/models.ts
+model/post.ts
+param.ts
+variables.ts

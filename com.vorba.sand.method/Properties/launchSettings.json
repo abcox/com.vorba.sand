@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "com.vorba.sand.method": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7193",
+      "launchBrowser": true,
+      "launchUrl": "api/swagger/ui",
+      "applicationUrl": "https://localhost:7193"
+    }
+  }
+}
