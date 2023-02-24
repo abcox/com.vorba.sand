@@ -4,3 +4,8 @@
 ```
 dotnet tool install --global dotnet-ef
 ```
+
+## Location
+
+The SQLite database named blogging.db is or will be created in special folder for local app (i.e. C:\Users\adam\AppData\Local).
+

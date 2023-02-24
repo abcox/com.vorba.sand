@@ -89,8 +89,7 @@ namespace com.vorba.sand.method
             using var db = new BloggingContext();
 
             // Read
-            var blog = db.Blogs
-                .FirstOrDefault(b => b.BlogId == id);
+            var blog = await db.Blogs.FirstOrDefaultAsync(b => b.BlogId == id);
 
             if (blog == null)
             {
@@ -120,6 +119,88 @@ namespace com.vorba.sand.method
             }
 
             return new OkObjectResult(res);
+        }
+
+        [FunctionName(nameof(SearchBlogs))]
+        [OpenApiOperation(operationId: nameof(SearchBlogs), tags: new[] { "blog" })]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
+        [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "Query search string contained in Url")]
+        [OpenApiParameter(name: "pageLimit", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = nameof(PagedRequest.PageSize))]
+        [OpenApiParameter(name: "pageStart", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = nameof(PagedRequest.PageNumber))]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(List<Post>), Description = "Search results", Summary = "request successful")]
+        [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
+        public async Task<IActionResult> SearchBlogs(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "blogs/search")] HttpRequest req)
+        {
+            _logger.LogInformation($"{nameof(SearchBlogs)}");
+
+            IQueryable<Blog> filteredBlogs = null;
+
+            using var db = new BloggingContext();
+
+            filteredBlogs = db.Blogs;
+
+            string? q = req.Query["q"];
+            if (q != null)
+                filteredBlogs = filteredBlogs.Where(x => x.Url.Contains(q));
+
+            //if (filteredBlogs.Count() == 0)
+            //    return new BadRequestObjectResult(new { q });
+
+            // paging
+            int? pageLimit = int.TryParse(req.Query["pageLimit"], out int pageLimitResult) ? pageLimitResult : null;
+            int? pageStart = int.TryParse(req.Query["pageStart"], out int pageStartResult) ? pageStartResult : null;
+            PagedRequest pagedRequest = new PagedRequest(limit: pageLimit, start: ++pageStart);
+            var pagedData = await filteredBlogs
+                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
+                .Take(pagedRequest.PageSize)
+                .ToListAsync();
+            var count = await filteredBlogs.CountAsync();
+
+            var response = new PagedResponse<List<Blog>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+
+            return new OkObjectResult(response);
+        }
+
+        [FunctionName(nameof(SearchBlogs2))]
+        [OpenApiOperation(operationId: nameof(SearchBlogs2), tags: new[] { "blog" })]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
+        [OpenApiRequestBody("request", typeof(BlogSearchRequest), Required = false, Description = "Blog search request")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(List<Post>), Description = "Search results", Summary = "request successful")]
+        [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
+        public async Task<IActionResult> SearchBlogs2(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "blogs/search/v2")] HttpRequest req)
+        {
+            _logger.LogInformation($"{nameof(SearchBlogs)}");
+
+            IQueryable<Blog> filteredBlogs = null;
+
+            using var db = new BloggingContext();
+
+            filteredBlogs = db.Blogs;
+
+
+            // paging
+            //int? pageLimit = int.TryParse(req.Query["pageLimit"], out int pageLimitResult) ? pageLimitResult : null;
+            //int? pageStart = int.TryParse(req.Query["pageStart"], out int pageStartResult) ? pageStartResult : null;
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var request = JsonConvert.DeserializeObject<BlogSearchRequest>(requestBody);
+            PagedRequest pagedRequest = new PagedRequest(limit: request.PageSize, start: ++request.PageNumber);
+            
+            var q = request.q.ToString();
+            if (!string.IsNullOrEmpty(q))
+                filteredBlogs = filteredBlogs.Where(x => x.Url.Contains(q));
+
+            var pagedData = await filteredBlogs
+                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
+                .Take(pagedRequest.PageSize)
+                .ToListAsync();
+            var count = await filteredBlogs.CountAsync();
+
+            var response = new PagedResponse<List<Blog>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+
+            return new OkObjectResult(response);
         }
 
         [FunctionName(nameof(CreateBlog))]
@@ -205,31 +286,6 @@ namespace com.vorba.sand.method
             return new OkObjectResult(blog);
         }
 
-        //[FunctionName(nameof(GetBlogPost))]
-        //[OpenApiOperation(operationId: nameof(GetBlogPost), tags: new[] { "blog" })]
-        //[OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
-        //[OpenApiParameter(name: "blogId", In = ParameterLocation.Path, Required = true, Type = typeof(int), Description = "The id of the blog")]
-        //[OpenApiParameter(name: "postId", In = ParameterLocation.Path, Required = true, Type = typeof(int), Description = "The id of post (of the blog)")]
-        //[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
-        //public async Task<IActionResult> GetBlogPost(
-        //    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "blog/{blogId}/post/{postId}")] HttpRequest req, int blogId, int postId)
-        //{
-        //    using var db = new BloggingContext();
-        //
-        //    // Read
-        //    var posts = db.Posts
-        //        .Where(b => b.BlogId == blogId);
-        //
-        //    var post = posts.FirstOrDefault(post => post.PostId == postId);
-        //
-        //    if (post == null)
-        //    {
-        //        return new BadRequestObjectResult(new { blogId, postId });
-        //    }
-        //
-        //    return new OkObjectResult(post);
-        //}
-
         [FunctionName(nameof(DeletePost))]
         [OpenApiOperation(operationId: nameof(DeletePost), tags: new[] { "post" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
@@ -301,52 +357,45 @@ namespace com.vorba.sand.method
             return new OkObjectResult(res);
         }
 
-        /// <summary>
-        /// DEPRECATED: use [POST] /post
-        /// </summary>
-        /// <param name="req"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        //[FunctionName(nameof(CreateBlogPost))]
-        //[OpenApiOperation(operationId: nameof(CreateBlogPost), tags: new[] { "post" })]
-        //[OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
-        //[OpenApiParameter(name: "id", In = ParameterLocation.Path, Required = true, Type = typeof(int), Description = nameof(Blog.BlogId))]
-        //[OpenApiRequestBody(contentType: MediaTypeNames.Application.Json, bodyType: typeof(Post), Description = "Create blog post", Required = true)]
-        //[OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(Post), Description = "Post created", Summary = "request successful")]
-        //[OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
-        //public async Task<IActionResult> CreateBlogPost(
-        //    [HttpTrigger(AuthorizationLevel.Function, "post", Route = "blog/{id}/post/create")] HttpRequest req, int id)
-        //{
-        //    _logger.LogInformation($"{nameof(CreateBlogPost)}");
-        //
-        //    using var db = new BloggingContext();
-        //
-        //    var blog = db.Blogs.Find(id);
-        //
-        //    if (blog == null)
-        //        return new NotFoundObjectResult(blog);
-        //
-        //    try
-        //    {
-        //        string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-        //        Post post = JsonConvert.DeserializeObject<Post>(requestBody);
-        //
-        //        post.Blog = blog;
-        //        post.BlogId = id;
-        //
-        //        db.Posts.Add(post);
-        //
-        //        db.SaveChanges();
-        //
-        //        post.Blog = null; // resolve exception -> Newtonsoft.Json: Self referencing loop detected with type 'Post'. Path 'blog.posts'.
-        //
-        //        return new OkObjectResult(post);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw;
-        //    }
-        //}
+        [FunctionName(nameof(SearchPosts))]
+        [OpenApiOperation(operationId: nameof(SearchPosts), tags: new[] { "blog" })]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
+        [OpenApiParameter(name: "id", In = ParameterLocation.Path, Required = true, Type = typeof(int), Description = "The Id of blog")]
+        [OpenApiParameter(name: "q", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "Query search string contained in Url")]
+        [OpenApiParameter(name: "pageLimit", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = nameof(PagedRequest.PageSize))]
+        [OpenApiParameter(name: "pageStart", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = nameof(PagedRequest.PageNumber))]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(List<Post>), Description = "Search results", Summary = "request successful")]
+        [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
+        public async Task<IActionResult> SearchPosts(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "blog/{id}/posts/search")] HttpRequest req, int id)
+        {
+            _logger.LogInformation($"{nameof(SearchPosts)}");
+
+            IQueryable<Post> filteredPosts = null;
+
+            using var db = new BloggingContext();
+
+            filteredPosts = db.Posts.Where(b => b.BlogId == id);
+
+            string q = req.Query["q"].FirstOrDefault()?.ToLower();
+            if (q != null)
+                filteredPosts = filteredPosts
+                    .Where(x => x.Content.ToLower().Contains(q) || x.Title.ToLower().Contains(q));
+
+            // paging
+            int? pageLimit = int.TryParse(req.Query["pageLimit"], out int pageLimitResult) ? pageLimitResult : null;
+            int? pageStart = int.TryParse(req.Query["pageStart"], out int pageStartResult) ? pageStartResult : null;
+            PagedRequest pagedRequest = new PagedRequest(limit: pageLimit, start: ++pageStart);
+            var pagedData = await filteredPosts
+                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
+                .Take(pagedRequest.PageSize)
+                .ToListAsync();
+            var count = await filteredPosts.CountAsync();
+
+            var response = new PagedResponse<List<Post>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+
+            return new OkObjectResult(response);
+        }
 
         [FunctionName(nameof(CreatePost))]
         [OpenApiOperation(operationId: nameof(CreatePost), tags: new[] { "post" })]

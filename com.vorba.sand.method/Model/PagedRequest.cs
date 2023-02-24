@@ -8,8 +8,8 @@ namespace com.vorba.sand.method.Model
 {
     public class PagedRequest
     {
-        public static readonly int DefaultPageStart = 1;
-        public static readonly int DefaultPageLimit = 10;
+        public static readonly int DefaultPageStart = 0;
+        public static readonly int DefaultPageLimit = 5;
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
         public PagedRequest()
