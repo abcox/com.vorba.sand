@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "com.vorba.sand.data.test": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:59226;http://localhost:59227"
+    }
+  }
+}

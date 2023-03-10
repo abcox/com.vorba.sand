@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace com.vorba.sand.method.Model
 {
-    internal class PagedResponse<T> : Response<T>
+    public class PagedResponse<T> : Response<T>
     {
-        public PagedResponse(T data, int pageNumber, int pageSize, int totalItems)
+        public PagedResponse(T data, int? pageNumber, int? pageSize, int totalItems)
         {
             this.Data = data;
             this.Errors = null;
@@ -22,10 +22,10 @@ namespace com.vorba.sand.method.Model
         public Uri FirstPage { get; set; }
         public Uri LastPage { get; set; }
         public Uri NextPage { get; set; }
-        public int PageNumber { get; set; }
-        public int PageSize { get; set; }
+        public int? PageNumber { get; set; }
+        public int? PageSize { get; set; }
         public Uri PreviousPage { get; set; }
         public int TotalItems { get; set; }
-        public int TotalPages { get; set; }
+        public int? TotalPages { get; set; }
     }
 }

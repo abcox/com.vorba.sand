@@ -151,13 +151,10 @@ namespace com.vorba.sand.method
             int? pageLimit = int.TryParse(req.Query["pageLimit"], out int pageLimitResult) ? pageLimitResult : null;
             int? pageStart = int.TryParse(req.Query["pageStart"], out int pageStartResult) ? pageStartResult : null;
             PagedRequest pagedRequest = new PagedRequest(limit: pageLimit, start: ++pageStart);
-            var pagedData = await filteredBlogs
-                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
-                .Take(pagedRequest.PageSize)
-                .ToListAsync();
+            var pagedData = await pagedRequest.GetDataAsync(filteredBlogs);
             var count = await filteredBlogs.CountAsync();
 
-            var response = new PagedResponse<List<Blog>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+            var response = new BlogSearchResponse(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
 
             return new OkObjectResult(response);
         }
@@ -166,7 +163,7 @@ namespace com.vorba.sand.method
         [OpenApiOperation(operationId: nameof(SearchBlogs2), tags: new[] { "blog" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         [OpenApiRequestBody("request", typeof(BlogSearchRequest), Required = false, Description = "Blog search request")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(List<Post>), Description = "Search results", Summary = "request successful")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(BlogSearchResponse), Description = "Search results", Summary = "request successful")]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
         public async Task<IActionResult> SearchBlogs2(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "blogs/search/v2")] HttpRequest req)
@@ -192,13 +189,10 @@ namespace com.vorba.sand.method
             if (!string.IsNullOrEmpty(q))
                 filteredBlogs = filteredBlogs.Where(x => x.Url.Contains(q));
 
-            var pagedData = await filteredBlogs
-                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
-                .Take(pagedRequest.PageSize)
-                .ToListAsync();
+            var pagedData = await pagedRequest.GetDataAsync(filteredBlogs);
             var count = await filteredBlogs.CountAsync();
 
-            var response = new PagedResponse<List<Blog>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+            var response = new BlogSearchResponse(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
 
             return new OkObjectResult(response);
         }
@@ -386,13 +380,48 @@ namespace com.vorba.sand.method
             int? pageLimit = int.TryParse(req.Query["pageLimit"], out int pageLimitResult) ? pageLimitResult : null;
             int? pageStart = int.TryParse(req.Query["pageStart"], out int pageStartResult) ? pageStartResult : null;
             PagedRequest pagedRequest = new PagedRequest(limit: pageLimit, start: ++pageStart);
-            var pagedData = await filteredPosts
-                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
-                .Take(pagedRequest.PageSize)
-                .ToListAsync();
+            var pagedData = await pagedRequest.GetDataAsync(filteredPosts);
             var count = await filteredPosts.CountAsync();
 
-            var response = new PagedResponse<List<Post>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+            var response = new PostsSearchResponse(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+
+            return new OkObjectResult(response);
+        }
+
+        [FunctionName(nameof(SearchPosts2))]
+        [OpenApiOperation(operationId: nameof(SearchPosts2), tags: new[] { "post" })]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
+        [OpenApiRequestBody("request", typeof(PostsSearchRequest), Required = false, Description = "Posts search request")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(PostsSearchResponse), Description = "Search results", Summary = "request successful")]
+        [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
+        public async Task<IActionResult> SearchPosts2(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "post/search/v2")] HttpRequest req)
+        {
+            _logger.LogInformation($"{nameof(SearchPosts2)}");
+
+            IQueryable<Post> filteredPosts = null;
+
+            using var db = new BloggingContext();
+
+            filteredPosts = db.Posts;
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var request = JsonConvert.DeserializeObject<PostsSearchRequest>(requestBody);
+            PagedRequest pagedRequest = new PagedRequest(limit: request.PageSize, start: ++request.PageNumber);
+
+            var blogId = request.blogId;
+            if (blogId != null)
+                filteredPosts = filteredPosts.Where(x => x.BlogId == blogId);
+
+            var q = request.q?.ToString();
+            if (!string.IsNullOrEmpty(q))
+                filteredPosts = filteredPosts
+                    .Where(x => x.Content.ToLower().Contains(q) || x.Title.ToLower().Contains(q));
+
+            var pagedData = await pagedRequest.GetDataAsync(filteredPosts);
+            var count = await filteredPosts.CountAsync();
+
+            var response = new PostsSearchResponse(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
 
             return new OkObjectResult(response);
         }
@@ -422,6 +451,7 @@ namespace com.vorba.sand.method
                 db.Posts.Add(post);
                 db.SaveChanges();
                 post.Blog = null; // resolve exception -> Newtonsoft.Json: Self referencing loop detected with type 'Post'. Path 'blog.posts'.
+
                 return new OkObjectResult(post);
             }
             catch (Exception ex)
@@ -440,36 +470,33 @@ namespace com.vorba.sand.method
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: MediaTypeNames.Application.Json, bodyType: typeof(List<Post>), Description = "Search results", Summary = "request successful")]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "bad request", Summary = "bad request")]
         public async Task<IActionResult> SearchPost(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "post/search")] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "post/search")] HttpRequest req)
         {
             _logger.LogInformation($"{nameof(SearchPost)}");
 
-            IQueryable<Post> posts = null;
-            
             using var db = new BloggingContext();
+
+            IQueryable<Post> filteredPosts = db.Posts;           
 
             int? blogId = int.TryParse(req.Query["blogId"], out int blogIdResult) ? blogIdResult : null;
             if (blogId != null)
-                posts = db.Posts.Where(x => x.BlogId == blogId);
+                filteredPosts = filteredPosts.Where(x => x.BlogId == blogId);
 
             string? title = req.Query["title"];
             if (title != null)
-                posts = posts.Where(x => x.Title.Contains(title));
+                filteredPosts = filteredPosts.Where(x => x.Title.Contains(title));
 
-            if (posts.Count() == 0)
-                return new BadRequestObjectResult(new { title });
+            //if (filteredPosts.Count() == 0)
+            //    return new BadRequestObjectResult(new { title });
 
             // paging
             int? pageLimit = int.TryParse(req.Query["pageLimit"], out int pageLimitResult) ? pageLimitResult : null;
             int? pageStart = int.TryParse(req.Query["pageStart"], out int pageStartResult) ? pageStartResult : null;
             PagedRequest pagedRequest = new PagedRequest(limit: pageLimit, start: pageStart);
-            var pagedData = await posts
-                .Skip((pagedRequest.PageNumber - 1) * pagedRequest.PageSize)
-                .Take(pagedRequest.PageSize)
-                .ToListAsync();
-            var count = await posts.CountAsync();
+            var pagedData = await pagedRequest.GetDataAsync(filteredPosts);
+            var count = await filteredPosts.CountAsync();
 
-            var response = new PagedResponse<List<Post>>(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
+            var response = new PostsSearchResponse(pagedData, pagedRequest.PageNumber, pagedRequest.PageSize, count);
             return new OkObjectResult(response);
         }
 
