@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Mime;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
-using AutoFixture;
+//using AutoFixture;
 using com.vorba.sand.method.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -140,7 +140,7 @@ namespace com.vorba.sand.method
 
             filteredBlogs = db.Blogs;
 
-            string? q = req.Query["q"];
+            string q = req.Query["q"];
             if (q != null)
                 filteredBlogs = filteredBlogs.Where(x => x.Url.Contains(q));
 
@@ -319,8 +319,8 @@ namespace com.vorba.sand.method
             using var db = new BloggingContext();
 
             // Read
-            var post = db.Posts
-                .FirstOrDefault(b => b.PostId == postId);
+            var post =await db.Posts
+                .FirstOrDefaultAsync(b => b.PostId == postId);
 
             if (post == null)
             {
@@ -456,6 +456,7 @@ namespace com.vorba.sand.method
             }
             catch (Exception ex)
             {
+                _logger.LogError("ERROR", ex);
                 throw;
             }
         }
@@ -482,7 +483,7 @@ namespace com.vorba.sand.method
             if (blogId != null)
                 filteredPosts = filteredPosts.Where(x => x.BlogId == blogId);
 
-            string? title = req.Query["title"];
+            string title = req.Query["title"];
             if (title != null)
                 filteredPosts = filteredPosts.Where(x => x.Title.Contains(title));
 

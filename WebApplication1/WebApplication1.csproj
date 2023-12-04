@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-WebApplication1-cc40bca4-564f-4ff1-b924-013576f8592a</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="wwwroot\assets\swagger-ui-dark.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="wwwroot\assets\css\swagger-ui-dark.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.24" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.24" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="2.13.4" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="2.13.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\com.vorba.sand.services2\com.vorba.sand.services2.csproj" />
+  </ItemGroup>
+
+</Project>

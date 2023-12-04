@@ -1,3 +1,5 @@
+using com.vorba.sand.services.CosmosDb.Demo;
+using com.vorba.sand.services.Interfaces;
 using com.vorba.sand.services.ServiceBus;
 using com.vorba.sand.services.SignalR;
 
@@ -12,11 +14,19 @@ namespace com.vorba.sand.services
             // Add services to the container.
 
             var services = builder.Services;
+            
+            //var settings = builder.Configuration
+            //.AddJsonFile(Path.Combine(context.ApplicationRootPath, "appsettings.json"), optional: true, reloadOnChange: false)
+            //.AddJsonFile(Path.Combine(context.ApplicationRootPath, $"appsettings.{context.EnvironmentName}.json"), optional: true, reloadOnChange: false)
+            //    .AddEnvironmentVariables()
+            //        .Build();
+
 
             builder.Services.AddOptions<ServiceBusOptions>()
                 .Configure<IConfiguration>((settings, configuration) =>
                 {
                     configuration.GetSection(nameof(ServiceBusOptions)).Bind(settings);
+                    configuration.GetSection(nameof(CosmosDbDemoServiceOptions)).Bind(settings);
                 });
 
             services.AddControllers();
@@ -39,6 +49,7 @@ namespace com.vorba.sand.services
 
             services.AddTransient<IMessageHub, MessageHub>();
             services.AddTransient<IQueueServices, QueueServices>();
+            //services.AddTransient<IObjectDataService, CosmosDbDemoService>();
             services.AddHostedService<QueueConsumerService>();
 
             var app = builder.Build();

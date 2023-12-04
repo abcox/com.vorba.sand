@@ -9,9 +9,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "com.vorba.sand.data", "com.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "com.vorba.sand.data.test", "com.vorba.sand.data.test\com.vorba.sand.data.test.csproj", "{9CF57824-38BF-4460-B869-36C02627C350}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "com.vorba.sand.services", "com.vorba.sand.services\com.vorba.sand.services.csproj", "{30994C7A-60AB-43A1-BF69-2A65A35F5F2F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "com.vorba.sand.services", "com.vorba.sand.services\com.vorba.sand.services.csproj", "{30994C7A-60AB-43A1-BF69-2A65A35F5F2F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "com.vorba.sand.services.test", "com.vorba.sand.services.test\com.vorba.sand.services.test.csproj", "{709CE68F-A2E7-46F2-A4C4-E53EEBD34216}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "com.vorba.sand.services.test", "com.vorba.sand.services.test\com.vorba.sand.services.test.csproj", "{709CE68F-A2E7-46F2-A4C4-E53EEBD34216}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1", "WebApplication1\WebApplication1.csproj", "{5EC3D1AD-5014-4927-914B-5E33A7D15117}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "com.vorba.sand.services2", "com.vorba.sand.services2\com.vorba.sand.services2.csproj", "{C3237E8C-0633-469D-9FED-C74B10E6BBE1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "com.vorba.data", "com.vorba.data\com.vorba.data.csproj", "{7F2C325B-7AEA-46FB-848A-4B1B1583DDB0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +45,18 @@ Global
 		{709CE68F-A2E7-46F2-A4C4-E53EEBD34216}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{709CE68F-A2E7-46F2-A4C4-E53EEBD34216}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{709CE68F-A2E7-46F2-A4C4-E53EEBD34216}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EC3D1AD-5014-4927-914B-5E33A7D15117}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EC3D1AD-5014-4927-914B-5E33A7D15117}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EC3D1AD-5014-4927-914B-5E33A7D15117}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EC3D1AD-5014-4927-914B-5E33A7D15117}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3237E8C-0633-469D-9FED-C74B10E6BBE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3237E8C-0633-469D-9FED-C74B10E6BBE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3237E8C-0633-469D-9FED-C74B10E6BBE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3237E8C-0633-469D-9FED-C74B10E6BBE1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F2C325B-7AEA-46FB-848A-4B1B1583DDB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F2C325B-7AEA-46FB-848A-4B1B1583DDB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F2C325B-7AEA-46FB-848A-4B1B1583DDB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F2C325B-7AEA-46FB-848A-4B1B1583DDB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

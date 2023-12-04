@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿//using AutoFixture;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +14,12 @@ using System.Reflection;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Azure.Identity;
+using System.IO;
+//using Microsoft.Azure.Cosmos;
+//using com.vorba.sand.services.CosmosDb.Demo;
+//using com.vorba.sand.services.Interfaces;
+//using com.vorba.sand.services.ServiceBus;
 
 [assembly: FunctionsStartup(typeof(com.vorba.sand.method.Startup))]
 namespace com.vorba.sand.method
@@ -146,15 +152,59 @@ namespace com.vorba.sand.method
     public class Startup : FunctionsStartup
     {
         private IConfiguration configuration;
+        private IConfiguration _azureConfiguration;
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
         {
             base.ConfigureAppConfiguration(builder);
+
+            //FunctionsHostBuilderContext context = builder.GetContext();
+            //var settings = builder.ConfigurationBuilder
+            ////.AddJsonFile(Path.Combine(context.ApplicationRootPath, "appsettings.json"), optional: true, reloadOnChange: false)
+            ////.AddJsonFile(Path.Combine(context.ApplicationRootPath, $"appsettings.{context.EnvironmentName}.json"), optional: true, reloadOnChange: false)
+            //.AddJsonFile(Path.Combine(context.ApplicationRootPath, "local.settings.json"), optional: true, reloadOnChange: false)
+            //    .AddEnvironmentVariables()
+            //        .Build();
+            //var o = new DefaultAzureCredentialOptions();
+            //o.VisualStudioTenantId = settings["AzureAd:TenantId"];
+
+            _azureConfiguration = new ConfigurationBuilder()
+              .AddEnvironmentVariables()
+              //.AddAzureAppConfiguration(options =>
+              //{
+              //    options.Connect(settings["ConnectionStrings:AzureAppConfig"])
+              //             // .Select(KeyFilter.Any, settings["DOTNET_ENVIRONMENT"])
+              //             .ConfigureKeyVault(kv =>
+              //             {
+              //                 kv.SetCredential(new DefaultAzureCredential(o));
+              //             })
+              //            .UseFeatureFlags()
+              //            .ConfigureRefresh(refresh =>
+              //            {
+              //                refresh.Register(".appconfig.featureflag/IBERIA_AAD_FEATURE", settings["DOTNET_ENVIRONMENT"], true)
+              //                       .SetCacheExpiration(TimeSpan.FromSeconds(1));
+              //            });
+              //    _refresher = options.GetRefresher();
+              //})
+              .Build();
         }
 
         public override void Configure(IFunctionsHostBuilder builder)
         {
             configuration = builder.Services.BuildServiceProvider().GetService<IConfiguration>();
+
+            //var moduleSettingsListTask = _azureConfiguration.DeserialiseForAsync<ModuleSettingsContext>("PMS_Integration").GetAwaiter();
+            //var moduleSettingsList = moduleSettingsListTask.GetResult();
+            //_moduleSettingsContext = moduleSettingsList.FirstOrDefault(m => m.AppTag == "PMS_ESP");
+            //builder.Services.AddScoped(c => _azureConfiguration);
+            //builder.Services.AddSingleton(new CosmosClient(_moduleSettingsContext.CosmosDbEndpoint, _azureConfiguration["AADCosmosDbPrimaryKeyKV"], new CosmosClientOptions()));
+            //builder.Services.AddScoped<IObjectDataService, CosmosDbDemoService>();
+            //builder.Services.AddOptions<ServiceBusOptions>()
+            //    .Configure<IConfiguration>((settings, configuration) =>
+            //    {
+            //        configuration.GetSection(nameof(ServiceBusOptions)).Bind(settings);
+            //        configuration.GetSection(nameof(CosmosDbDemoServiceOptions)).Bind(settings);
+            //    });
 
             builder.Services//.AddSingleton(new Fixture())
                             .AddSingleton<IOpenApiConfigurationOptions>(_ =>

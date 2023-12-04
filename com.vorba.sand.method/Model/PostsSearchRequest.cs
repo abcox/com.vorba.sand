@@ -9,6 +9,6 @@ namespace com.vorba.sand.method.Model
     public class PostsSearchRequest : PagedRequest
     {
         public int? blogId { get; set; }
-        public string? q { get; set; }
+        public string q { get; set; }
     }
 }
