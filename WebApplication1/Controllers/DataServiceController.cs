@@ -2,6 +2,7 @@
 using com.vorba.sand.services2;
 using com.vorba.sand.services2.CosmosDb;
 using com.vorba.sand.services2.CosmosDb.Models;
+using com.vorba.sand.services2.ServiceBus;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Annotations;
@@ -16,12 +17,12 @@ namespace WebApplication1.Controllers
     public class DataServiceController : ControllerBase
     {
         private readonly ICosmosDbService _cosmosDbService;
-        private readonly IOptions<CosmosDbDemoServiceOptions> _cosmosDbDemoServiceOptions;
+        private readonly IQueueServices? _queueServices;
 
-        public DataServiceController(ICosmosDbService cosmosDbService, IOptions<CosmosDbDemoServiceOptions> cosmosDbDemoServiceOptions)
+        public DataServiceController(ICosmosDbService cosmosDbService, IQueueServices queueServices)
         {
             _cosmosDbService = cosmosDbService;
-            _cosmosDbDemoServiceOptions = cosmosDbDemoServiceOptions;
+            _queueServices = queueServices;
         }
 
         // NOTE: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling?view=aspnetcore-8.0
@@ -128,6 +129,20 @@ namespace WebApplication1.Controllers
         //{
         //    return new OkObjectResult(_cosmosDbDemoServiceOptions);
         //}
+
+
+
+        [SwaggerOperation(Tags = new[] { "ServiceBusDemo" })]
+        [HttpPost("ServiceBusDemo")]
+        public async Task<IActionResult> PostServiceBusMessage([FromQuery] string queueName, [FromBody] SampleMessageModel messageContent)
+        {
+            if (_queueServices == null) throw new ArgumentNullException(nameof(QueueServices));
+            //var messageObject = new SampleMessageModel { SomeStringProperty = messageContent };
+            await _queueServices.SendMessageAsync(messageContent, queueName);
+            return new OkResult();
+        }
+
+
 
 
         // Scaffolded CRUD:

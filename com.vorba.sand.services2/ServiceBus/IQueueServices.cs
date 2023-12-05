@@ -1,0 +1,7 @@
+﻿namespace com.vorba.sand.services2.ServiceBus
+{
+    public interface IQueueServices
+    {
+        Task SendMessageAsync<T>(T messageObject, string queueName);
+    }
+}

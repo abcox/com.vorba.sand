@@ -7,6 +7,7 @@ using System.Reflection;
 using com.vorba.sand.services2.CosmosDb;
 using com.vorba.sand.services2;
 using Azure.Identity;
+using com.vorba.sand.services2.ServiceBus;
 
 namespace WebApplication1
 {
@@ -41,10 +42,17 @@ namespace WebApplication1
             //ConfigurationBuilder configBuilder = new ConfigurationBuilder();
             //configBuilder.AddAzureKeyVault(new Uri(""), new DefaultAzureCredential());
 
-            builder.Services.AddOptions<CosmosDbDemoServiceOptions>()
+            builder.Services
+                .AddOptions<CosmosDbDemoServiceOptions>()
                 .Configure<IConfiguration>((settings, configuration) =>
                 {
                     configuration.GetSection(nameof(CosmosDbDemoServiceOptions)).Bind(settings);
+                });
+            builder.Services
+                .AddOptions<ServiceBusOptions>()
+                .Configure<IConfiguration>((settings, configuration) =>
+                {
+                    configuration.GetSection(nameof(ServiceBusOptions)).Bind(settings);
                 });
 
             // Add services to the container.
@@ -60,6 +68,7 @@ namespace WebApplication1
             });
 
             builder.Services.AddTransient<ICosmosDbService, CosmosDbService>();
+            builder.Services.AddTransient<IQueueServices, QueueServices>();
 
             var app = builder.Build();
 
