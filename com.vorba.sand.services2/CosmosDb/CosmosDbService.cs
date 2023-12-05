@@ -52,6 +52,10 @@ namespace com.vorba.sand.services2.CosmosDb
             }
             var endpointUri = options?.EndpointUri;
             var primaryKey = options?.PrimaryKey;
+            if (string.IsNullOrEmpty(primaryKey))
+            {
+                throw new ArgumentNullException("CosmosDbDemoServiceOptions:PrimaryKey >> appsettings or keyvault entry missing or undefined");
+            }
             return new CosmosClient(endpointUri, primaryKey, clientOptions);
         }
 

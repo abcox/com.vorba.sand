@@ -26,3 +26,13 @@ openapi-generator-cli generate -g typescript-angular -i http://localhost:7193/ap
 1. Add WebApplication1 as new REST Web API
 2. Add Services2 to support CosmosDb use by WebApplication1
 3. Add com.vorba.data to support models/view-models, etc.
+
+## Azure Resources
+
+### Key vault
+
+1. Access policy options: [RBAC](https://learn.microsoft.com/en-us/azure/role-based-access-control/overview?WT.mc_id=Portal-Microsoft_Azure_KeyVault), or [legacy](https://learn.microsoft.com/en-us/azure/key-vault/general/assign-access-policy?WT.mc_id=Portal-Microsoft_Azure_KeyVault&tabs=azure-portal)
+2. Grant 'Key Vault Secrets User' role to the App Svc via 'Identity' / Azure Role Assignment / Add
+3. Review [vorba-sand-kv-2 role assignments](https://portal.azure.com/#@Vorba.onmicrosoft.com/resource/subscriptions/236217f7-0ad4-4dd6-8553-dc4b574fd2c5/resourceGroups/vorba-sand/providers/Microsoft.KeyVault/vaults/vorba-sand-kv-2/users)
+4. Note: resolve Visual Studio Azure authority issues with cmd like `az login`
+

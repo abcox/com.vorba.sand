@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
 using System.Reflection;
 using com.vorba.sand.services2.CosmosDb;
 using com.vorba.sand.services2;
+using Azure.Identity;
 
 namespace WebApplication1
 {
@@ -17,10 +19,27 @@ namespace WebApplication1
             var envName = builder.Environment.EnvironmentName;
             var webRootPath = builder.Environment.WebRootPath;
             var settings = builder.Configuration
-            .AddJsonFile(Path.Combine(webRootPath, "appsettings.json"), optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine(webRootPath, $"appsettings.{envName}.json"), optional: true, reloadOnChange: false)
+                .AddJsonFile(Path.Combine(webRootPath, "appsettings.json"), optional: true, reloadOnChange: false)
+                .AddJsonFile(Path.Combine(webRootPath, $"appsettings.{envName}.json"), optional: true, reloadOnChange: false)
+                .AddAzureKeyVault(
+                    //new Uri("https://vorba-sand-kv-2.vault.azure.net/"),
+                    new Uri($"https://{builder.Configuration["KeyVaultName"]}.vault.azure.net/"),
+                    new DefaultAzureCredential())
                 .AddEnvironmentVariables()
-                    .Build();
+                .Build();
+
+            //builder.Configuration.AddAzureAppConfiguration(options =>
+            //{
+            //    options.Connect(
+            //        builder.Configuration["ConnectionStrings:AppConfig"])
+            //            .ConfigureKeyVault(kv =>
+            //            {
+            //                kv.SetCredential(new DefaultAzureCredential());
+            //            });
+            //});
+
+            //ConfigurationBuilder configBuilder = new ConfigurationBuilder();
+            //configBuilder.AddAzureKeyVault(new Uri(""), new DefaultAzureCredential());
 
             builder.Services.AddOptions<CosmosDbDemoServiceOptions>()
                 .Configure<IConfiguration>((settings, configuration) =>

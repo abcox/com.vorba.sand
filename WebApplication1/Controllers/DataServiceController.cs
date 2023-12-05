@@ -1,7 +1,9 @@
 ﻿using com.vorba.data.Models;
+using com.vorba.sand.services2;
 using com.vorba.sand.services2.CosmosDb;
 using com.vorba.sand.services2.CosmosDb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Annotations;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -14,10 +16,12 @@ namespace WebApplication1.Controllers
     public class DataServiceController : ControllerBase
     {
         private readonly ICosmosDbService _cosmosDbService;
+        private readonly IOptions<CosmosDbDemoServiceOptions> _cosmosDbDemoServiceOptions;
 
-        public DataServiceController(ICosmosDbService cosmosDbService)
+        public DataServiceController(ICosmosDbService cosmosDbService, IOptions<CosmosDbDemoServiceOptions> cosmosDbDemoServiceOptions)
         {
             _cosmosDbService = cosmosDbService;
+            _cosmosDbDemoServiceOptions = cosmosDbDemoServiceOptions;
         }
 
         // NOTE: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling?view=aspnetcore-8.0
@@ -114,6 +118,17 @@ namespace WebApplication1.Controllers
                 new OkObjectResult(result) :
                 new BadRequestObjectResult(result);
         }
+
+
+
+
+        //[SwaggerOperation(Tags = new[] { "Admin" })]
+        //[HttpGet("admin/config")]
+        //public async Task<IActionResult> GetAppSettings()
+        //{
+        //    return new OkObjectResult(_cosmosDbDemoServiceOptions);
+        //}
+
 
         // Scaffolded CRUD:
 
