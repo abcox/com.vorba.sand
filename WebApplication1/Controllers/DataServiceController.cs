@@ -74,11 +74,22 @@ namespace WebApplication1.Controllers
         //}
 
 
+        #region Character
         [SwaggerOperation(Tags = new[] { "Character" })]
         [HttpGet("Character/{id}")]
         public async Task<IActionResult> ReadCharacter(string id)
         {
             var result = await _cosmosDbService.ReadCharacterAsync(id);
+            return result.Status == Status.Succeeded ?
+                new OkObjectResult(result) :
+                new BadRequestObjectResult(result);
+        }
+
+        [SwaggerOperation(Tags = new[] { "Character" })]
+        [HttpGet("Character")]
+        public async Task<IActionResult> ReadCharacters([FromQuery] CharacterFilter characterFilter)
+        {
+            var result = await _cosmosDbService.ReadCharacterAsync(characterFilter);
             return result.Status == Status.Succeeded ?
                 new OkObjectResult(result) :
                 new BadRequestObjectResult(result);
@@ -119,7 +130,7 @@ namespace WebApplication1.Controllers
                 new OkObjectResult(result) :
                 new BadRequestObjectResult(result);
         }
-
+        #endregion Character
 
 
 

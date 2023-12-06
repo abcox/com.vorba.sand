@@ -16,6 +16,7 @@ namespace com.vorba.sand.services2.CosmosDb
         Task<BaseResponse> CreateDatabaseContainerAsync(string databaseId, string containerId, string partitionKeyPath);
         Task<BaseResponse> GetDatabaseListAsync();
 
+        Task<BaseResponse> ReadCharacterAsync(CharacterFilter characterFilter);
         Task<BaseResponse> ReadCharacterAsync(string id);
         Task<BaseResponse> CreateCharacterAsync(Character character);
         Task<BaseResponse> UpdateCharacterAsync(Character character);

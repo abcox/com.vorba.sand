@@ -144,13 +144,16 @@ namespace com.vorba.sand.services2.CosmosDb
             BaseResponse result = new BaseResponse { Status = Status.Incomplete };
             try
             {
-                var database = _cosmosClient.GetDatabase("rickandmorty"); // no call - returns proxy
-                //ContainerProperties containerProperties = new ContainerProperties { Id = containerId, PartitionKeyPath = partitionKeyPath };
-                var container = database.GetContainer("character");
-                //dynamic blob = new { };
-                //blob.Id = Guid.NewGuid().ToString();
-                //blob.PartitionKey = data.Name;
-                ItemResponse<Character> response = await container.CreateItemAsync(character, new PartitionKey(character.Id));
+                //var database = _cosmosClient.GetDatabase("rickandmorty"); // no call - returns proxy
+                ////ContainerProperties containerProperties = new ContainerProperties { Id = containerId, PartitionKeyPath = partitionKeyPath };
+                //var container = database.GetContainer("character");
+                ////dynamic blob = new { };
+                ////blob.Id = Guid.NewGuid().ToString();
+                ////blob.PartitionKey = data.Name;
+
+                var container = GetContainer(_cosmosClient);
+                var id = character.Id.ToString();
+                ItemResponse<Character> response = await container.CreateItemAsync(character, new PartitionKey(id));
                 result = new BaseResponse { Status = Status.Succeeded, Message = $"Character added. ActivityId: {response.ActivityId}" };
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == HttpStatusCode.NotFound)
@@ -169,10 +172,10 @@ namespace com.vorba.sand.services2.CosmosDb
             BaseResponse result;
             try
             {
-                var database = _cosmosClient.GetDatabase("rickandmorty"); // no call - returns proxy
-                var container = database.GetContainer("character");
-                ItemResponse<Character> itemResponse = await container.ReadItemAsync<Character>(character.Id, new PartitionKey(character.Id));
-                itemResponse = await container.ReplaceItemAsync(character, character.Id, new PartitionKey(character.Id));
+                var container = GetContainer(_cosmosClient);
+                var id = character.Id.ToString();
+                ItemResponse<Character> itemResponse = await container.ReadItemAsync<Character>(id, new PartitionKey(id));
+                itemResponse = await container.ReplaceItemAsync(character, id, new PartitionKey(id));
                 result = new BaseResponse { Status = Status.Succeeded, Message = $"Character updated. ActivityId: {itemResponse.ActivityId}" };
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == HttpStatusCode.NotFound)
@@ -191,8 +194,7 @@ namespace com.vorba.sand.services2.CosmosDb
             BaseResponse result;
             try
             {
-                var database = _cosmosClient.GetDatabase("rickandmorty"); // no call - returns proxy
-                var container = database.GetContainer("character");
+                var container = GetContainer(_cosmosClient);
                 //var q = container.GetItemLinqQueryable<Character>();
                 //var item = q.Where(p => p.Id == id).Single();
                 var itemResponse = await container.ReadItemAsync<Character>(id, new PartitionKey(id));
@@ -217,13 +219,113 @@ namespace com.vorba.sand.services2.CosmosDb
             return result;
         }
 
+        static public Container GetContainer(CosmosClient client)
+        {
+            var database = client.GetDatabase("rickandmorty"); // no call - returns proxy
+            return database.GetContainer("character");
+        }
+
+        static public async Task<Container> GetContainer(CosmosClient client, string databaseName, string containerName, bool createIfNotExists = false)
+        {
+            var database = createIfNotExists ?
+               await client.CreateDatabaseIfNotExistsAsync(databaseName) :
+               client.GetDatabase(databaseName); // no call - returns proxy
+            var result = createIfNotExists ?
+                await database.CreateContainerIfNotExistsAsync(containerName, "/id") :
+                database.GetContainer(containerName);
+            return result;
+        }
+
+        static public async Task<Container> GetContainer(CosmosDbDemoServiceOptions options)
+        {
+            var containerName = options.ContainerId;
+            var databaseName = options.DatabaseId;
+            var createIfNotExists = options.CreateIfNotExists;
+            var client = GetCosmosClient(options);
+            var database = createIfNotExists ?
+               await client.CreateDatabaseIfNotExistsAsync(databaseName) :
+               client.GetDatabase(databaseName); // no call - returns proxy
+            var result = createIfNotExists ?
+                await database.CreateContainerIfNotExistsAsync(containerName, "/id") :
+                database.GetContainer(containerName);
+            return result;
+        }
+
+        public async Task<BaseResponse> ReadCharacterAsync(CharacterFilter characterFilter)
+        {
+            BaseResponse result;
+            try
+            {
+                //var container = GetContainer(_cosmosClient);
+                var container = await CosmosDbService.GetContainer(_cosmosClient, "RickAndMortyTest2", "Characters", createIfNotExists: true);
+
+                var q = container.GetItemLinqQueryable<Character>();
+                //var item = q.Where(p => p.Id == id).Single();
+                IQueryable<Character> query = q;
+                if (characterFilter.Name != null)
+                {
+                    query = query.Where(p => p.Name != null ? p.Name.Contains(characterFilter.Name) : false);
+                }
+                if (characterFilter.CreatedOn != null)
+                {
+                    query = query.Where(p => p.Created == characterFilter.CreatedOn);
+                }
+                else
+                {
+                    if (characterFilter.CreatedOnOrAfter != null)
+                    {
+                        query = query.Where(p => p.Created >= characterFilter.CreatedOnOrAfter);
+                    }
+                    else if (characterFilter.CreatedAfter != null)
+                    {
+                        query = query.Where(p => p.Created > characterFilter.CreatedAfter);
+                    }
+                    if (characterFilter.CreatedOnOrBefore != null)
+                    {
+                        query = query.Where(p => p.Created <= characterFilter.CreatedOnOrBefore);
+                    }
+                    else if (characterFilter.CreatedBefore != null)
+                    {
+                        query = query.Where(p => p.Created > characterFilter.CreatedAfter);
+                    }
+                }
+                //var itemResponse = await container.ReadItemAsync<Character>(id, new PartitionKey(id));
+
+                var iterator = query.ToFeedIterator();
+                List<Character> items = new List<Character>();
+                while (iterator.HasMoreResults)
+                {
+                    var results = await iterator.ReadNextAsync();
+                    items.AddRange(results);
+                }
+
+                var itemCount = items.Count;
+                if (itemCount == 0)
+                {
+                    result = new BaseResponse { Status = Status.NotFound, Message = "Character not found." };
+                }
+                else
+                {
+                    result = new BaseResponse { Data = new[] { items }, Count = items.Count, Status = Status.Succeeded, Message = $"Found {itemCount} characters." };
+                }
+            }
+            catch (CosmosException cosmosException) when (cosmosException.StatusCode == HttpStatusCode.NotFound)
+            {
+                result = new BaseResponse { Status = Status.Failed, Message = $"cosmosException: {cosmosException.Message}" };
+            }
+            catch (Exception exception)
+            {
+                result = new BaseResponse { Status = Status.Failed, Message = $"exception: {exception.Message}" };
+            }
+            return result;
+        }
+
         public async Task<BaseResponse> DeleteCharacterAsync(string id)
         {
             BaseResponse result = new BaseResponse { Status = Status.Incomplete };
             try
             {
-                var database = _cosmosClient.GetDatabase("rickandmorty"); // no call - returns proxy
-                var container = database.GetContainer("character");
+                var container = GetContainer(_cosmosClient);
                 ItemResponse<Character> response = await container.DeleteItemAsync<Character>(id, new PartitionKey(id));
                 result = new BaseResponse { Data = new[] { response.Resource }, Status = Status.Succeeded, Message = "Character deleted." };
             }
@@ -243,10 +345,9 @@ namespace com.vorba.sand.services2.CosmosDb
             BaseResponse result = new BaseResponse { Status = Status.Incomplete };
             try
             {
-                var database = _cosmosClient.GetDatabase("rickandmorty"); // no call - returns proxy
-                var container = database.GetContainer("character");
+                var container = GetContainer(_cosmosClient);
                 var q = container.GetItemLinqQueryable<Character>();
-                var iterator = q.Where(p => ids.Contains(p.Id)).ToFeedIterator();
+                var iterator = q.Where(p => ids.Contains(p.Id.ToString())).ToFeedIterator();
                 List<Character> items = new List<Character>();
                 while (iterator.HasMoreResults)
                 {

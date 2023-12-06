@@ -18,6 +18,8 @@ namespace com.vorba.sand.services2.CosmosDb.Models
 
         public dynamic Data { get; set; }
 
+        public int Count { get; set; }
+
     }
         public enum Status
         {
